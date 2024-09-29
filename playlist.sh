@@ -2,28 +2,65 @@
 
 #python3 playlist.py > playlist.txt
 python -c "from pytube import Playlist
+import pyperclip
+import os
 
 URL_PLAYLIST = input('Enter the URL to download: ')
 
-# Retrieve URLs of videos from playlist
+# make new directory with playlist title
 playlist = Playlist(URL_PLAYLIST)
+title = playlist.title
+os.mkdir(title)
+
+# Retrieve URLs of videos from playlist
 print('Number Of Videos In playlist: %s' % len(playlist.video_urls))
 
 urls = []
 for url in playlist:
-    urls.append(url)
-
+	urls.append(url)
+#copies urls to clipboard and echoes them to cli
+pyperclip.copy(urls)
 print(urls)"
 
 
-#read the outputted file, remove the first line and remove all non-url formatting and put each on its own line while waiting for all output before writting it back to the origonal file
+#detect which os is running
+device="$(uname -s)"
+case "${unameOut}" in
+	Linux*)     device=Linux;;
+	Darwin*)    device=Mac;;
+	CYGWIN*)    device=Cygwin;;
+esac
+echo ${device}
 
-cat playlist.txt | tail -n 1 | tr -d "][''," | tr ' ' '\n' | sponge playlist.txt
-
-
-#loop to take each individual line of the file and download them one by one to prevent rate limiting and output as mp4 files
-
-for url in $( cat playlist.txt)
-do
-	yt-dlp --format "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]" $url
-done
+#if statement to determin which commands to run
+if [ $device == Darwin ]
+then
+	#sets variable equal to the name of the new folder
+	parth="$(ls -tU | head -1)"
+	#uses built in paste command and some delimiters to sanitize the output of the python and put it into a file
+	pbpaste | tail -n 1 | tr -d "][''," | tr ' ' '\n' | sponge playlist.txt
+	#for loop to evaluate each individual video in the playlist and downlooad them as mp4 files
+	for url in $( cat playlist.txt)
+	do
+		yt-dlp --format "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]" -P "$parth" $url
+	done
+elif [ $device == Linux ]
+then
+	#same as mac
+	parth="$(\ls -1dt ./*/ | head -n 1)"
+	xclip -out -selection clipboard | tail -n 1 | tr -d "][''," | tr ' ' '\n' | sponge playlist.txt
+	for url in $( cat playlist.txt)
+	do
+		yt-dlp --format "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]" -P "$parth" $url
+	done
+elif [ $device == Cygwin ]
+then
+	#same as mac
+	parth="$(\ls -1dt ./*/ | head -n 1)"
+	pclip | tail -n 1 | tr -d "][''," | tr ' ' '\n' | sponge playlist.txt
+	for url in $( cat playlist.txt)
+	do
+		yt-dlp --format "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]" -P "$parth" $url
+	done
+fi
+#thanks for using :D
