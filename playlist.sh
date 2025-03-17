@@ -45,7 +45,23 @@ then
 	do
 		yt-dlp --format "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]" -P "$parth" $url
 	done
-	
+	rm playlist.txt
+	echo "$parth"
+	read -p "Convert to mp3?" -n 1 -r
+	if [[ $REPLY =~ ^[Yy]$ ]]
+	then
+		echo
+		for ln in "$parth"/*
+		do ffmpeg -i "$ln" -vn -ab 192k -acodec libmp3lame -ac 2 "$parth"/"$ln".mp3
+		done
+	fi
+	read -p "Remove mp4's?" -n 1 -r
+	if [[ $REPLY =~ ^[Yy]$ ]]
+	then
+		echo
+		rm -v *.mp4
+	fi
+		
 elif [ $device == Linux ]
 then
 	#same as mac
@@ -55,15 +71,28 @@ then
 	do
 		yt-dlp --format "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]" -P "$parth" $url
 	done
-	
+	read -p "Convert to mp3?" -n 1 -r
+	if [[ $REPLY =~ ^[Yy]$ ]]
+	then
+		echo
+		for ln in "$parth"/*
+		converttomp3.sh "$ln"
+		done
+	fi
+	read -p "Remove mp4's?" -n 1 -r
+	if [[ $REPLY =~ ^[Yy]$ ]]
+	then
+		echo
+		rm -v *.mp4
+	fi
 elif [ $device == Cygwin ]
 then
-	#same as mac
+
 	parth="$(\ls -1dt ./*/ | head -n 1)"
 	pclip | tail -n 1 | tr -d "][''," | tr ' ' '\n' | sponge playlist.txt
 	for url in $( cat playlist.txt)
 	do
-		yt-dlp --format "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]" -P "$parth" $url
+		yt-dlp -x --audio-format mp3 -P "$parth" $url
 	done
 fi
 #thanks for using :D
