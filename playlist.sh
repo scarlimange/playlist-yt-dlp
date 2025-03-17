@@ -90,9 +90,18 @@ then
 
 	parth="$(\ls -1dt ./*/ | head -n 1)"
 	pclip | tail -n 1 | tr -d "][''," | tr ' ' '\n' | sponge playlist.txt
+	read -p "Convert to mp3?" -n 1 -r
+	if [[ $REPLY =~ ^[Yy]$ ]]
+	then
+		for url in $( cat playlist.txt)
+		do
+			yt-dlp -x --audio-format mp3 -P "$parth" $url
+		done
+	else 
 	for url in $( cat playlist.txt)
-	do
-		yt-dlp -x --audio-format mp3 -P "$parth" $url
-	done
+		do
+			yt-dlp --format "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]" -P "$parth" $url
+		done
+	fi
 fi
 #thanks for using :D
